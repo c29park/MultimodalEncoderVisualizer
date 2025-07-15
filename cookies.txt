@@ -1,0 +1,15 @@
+# Netscape HTTP Cookie File
+# https://curl.haxx.se/rfc/cookie_spec.html
+# This is a generated file! Do not edit.
+
+addons.mozilla.org	FALSE	/	TRUE	0	taarId	9c7d34d96070b8bb6f89164c9facbf4df5aa9aa1a298786cd397e26aa4a9ca4a
+.google.com	TRUE	/	TRUE	1767518904	AEC	AVh_V2jEVALWsfRKGOROl67wSck1uQfSFmn_umhWa_wx1k3Cx7z3KTn2MA
+.google.com	TRUE	/	TRUE	1767778104	NID	525=furk21OdPzH_MX9QGfpYinthCFMJBVoH4gssG6e-W6Fx1jNEl_-cf3C_7GOFyLd2EDNjxTtYKPJ2rLcnkK9dRY33eg0p4on4lg7cZKTtOYPefFtS0vNKnqyatNUM4QL0XlDADOyn4bWb9D0DFd9VBD3WFhAcfqbDvS-LgefIKxiilzCx4nNtbqb7yfpWEofqJRZPUXyjGfjTQdpznxVsB17M3E0peQVR576yYptefOfzOkx7
+www.google.com	FALSE	/	FALSE	1751967512	DV	s9lW6o96AAYbMMNiN6YW-gaUSteVfhk
+.chromewebstore.google.com	TRUE	/	FALSE	1786526911	_ga_KHZNC1Q6K0	GS2.1.s1751966910$o1$g0$t1751966911$j59$l0$h0
+.chromewebstore.google.com	TRUE	/	FALSE	1786526910	_ga	GA1.1.1711487996.1751966910
+chromewebstore.google.com	FALSE	/	TRUE	1754558910	OTZ	8161049_20_20__20_
+.mozilla.org	TRUE	/	FALSE	1786526932	_ga_B9CY1C9VBC	GS2.1.s1751966915$o1$g1$t1751966932$j43$l0$h0
+.mozilla.org	TRUE	/	FALSE	1786526915	_ga	GA1.2.762763826.1751966915
+.mozilla.org	TRUE	/	FALSE	1752053315	_gid	GA1.2.1497344836.1751966916
+.mozilla.org	TRUE	/	FALSE	1751966975	_gat	1
