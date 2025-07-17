@@ -9,46 +9,56 @@ import yt_dlp
 import os
 
 @st.cache_data(show_spinner=False)
-def download_video(url: str, cookie_file: str = None) -> str:
+def download_video(url: str)->str:
     """
     Downloads the YouTube video from the given URL and returns the local file path. 
     """
-    if not cookie_file:
-        st.warning("If this video is age/region restricted, please provide a cookie file.")
-        uploaded = st.file_uploader("Upload Cookie File", type= ["txt"])
-        if uploaded:
-            cookie_dir = "cookies"
-            os.makedirs(cookie_dir, exist_ok=True)
-            cookie_file = os.path.join(cookie_dir, uploaded.name)
-            with open(cookie_file, "wb") as f:
-                f.write(uploaded.getvalue())
-            st.success(f"Saved cookies file at {cookie_file}")
-
     output_path = "downloads"
     os.makedirs(output_path, exist_ok=True)
-    ydl_opts = {
-        "format": "bestvideo+bestaudio/best",
-        "outtmpl": os.path.join(output_path,"%(id)s.%(ext)s"),
-        "merge_output_format": "mp4",
-        "quiet": False,
-        "verbose": True, 
-    }
-    if cookie_file:
-        ydl_opts["cookiefile"] = cookie_file
+    cookie_file = "cookies.txt"
+    if not os.path.exists(cookie_file):
+        cookies_args = ["--cookies-from-browser", "firefox"]
     else:
-        ydl_opts["cookies_from_browser"] = "firefox"
+        cookies_args = ["--cookies", cookie_file]
+    cmd = [
+        "yt-dlp",
+        "--force-overwrites",
+        "-f", "bestvideo[height=240]+bestaudio",
+        *cookies_args,
+        "--user-agent", 
+        "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/117.0",
+        "-o", f"{output_path}/%(id)s.%(ext)s",
+        url
+    ]
 
-    print(">>> yt-dlp options:", ydl_opts)
+    # Debug: show the command
+    print("Running command:", " ".join(cmd))
 
-    #Run download
-    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-        info = ydl.extract_info(url, download=True)
-    video_id = info.get("id")
-    ext = info.get("ext", "mp4")
-    filepath = os.path.join(output_path, f"{video_id}.{ext}")
-    
-    return filepath
+    # Execute download
+    try:
+        # Run the command and capture output for debugging
+        result = subprocess.run(cmd, capture_output=True, text=True)
+        if result.returncode != 0:
+            # Print stdout/stderr to help diagnose
+            print("yt-dlp stdout:", result.stdout)
+            print("yt-dlp stderr:", result.stderr)
+            raise RuntimeError(f"Download failed (exit {result.returncode})")
 
+    except subprocess.CalledProcessError as e:
+        raise RuntimeError(f"Download failed with exit code {e.returncode}")
+
+
+    # Retrieve video ID to locate file
+    try:
+        vid_id = subprocess.check_output([
+            "yt-dlp", "--get-id", url
+        ], text=True).strip()
+    except subprocess.CalledProcessError:
+        vid_id = None
+
+    # Construct path
+    if vid_id:
+        return os.path.join(output_path, f"{vid_id}.mp4")
 
 def extract_audio(video_path: str, audio_path: str = None) -> str:
     """
