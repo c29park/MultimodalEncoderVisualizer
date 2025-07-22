@@ -6,6 +6,11 @@ import os
 import streamlit as st
 from utils import extract_audio
 from pyannote_diarization import diarize, transcribe_segments
+from detect_individuals import build_face_db, detect_people_in_video
+import multiprocessing as mp
+mp.set_start_method('spawn', force=True)
+import faulthandler
+faulthandler.enable(all_threads=True)
 # Basic Streamlit app for multimodal analysis of YouTube videos with modality toggles
 
 def main():
@@ -33,10 +38,13 @@ def main():
     if not uploaded_video:
         st.info("Please upload a video file to analyze.")
         return
+    
+    
 
     uploads_dir = "uploads"
     os.makedirs(uploads_dir, exist_ok=True)
     video_path = os.path.join(uploads_dir, uploaded_video.name)
+    
     with open(video_path, "wb") as f:
         f.write(uploaded_video.getvalue())
     st.success(f"Saved uploaded video to {video_path}")
@@ -63,62 +71,74 @@ def main():
         # except Exception as e:
         #     st.error(f"Failed to download video: {e}")
         #     return
+        # People Detection
+        st.info("Let's first see if we have any individuals of interest appearing in the video...")
+        face_db, path_db = build_face_db()
+        people = detect_people_in_video(video_path, face_db, path_db, sample_rate_sec = 1.0)
+        st.subheader("People Detected")
+        if people:
+            cols = st.columns(len(people))
+            for col, (name, imgp, ts) in zip(cols, people):
+                caption = f"name @ {ts:.1f}s"
+                col.image(imgp, caption=f"{name} @ {ts:.1f}s", use_container_width=True)
+        else:
+            st.write("No known faces detected in sampled frames.")
         # Extract audio
-        st.info("Extracting audio from the video...")
-        try:
-            audio_file = extract_audio(video_path)
-            st.success(f"Audio extracted successfully: {audio_file}")
-        except Exception as e:
-            st.error(f"Audio extraction failed: {e}")
-            return
-        #Audio-Visual Diarization
-        st.info("Running speaker diarization...")
-        try: 
-            segments = diarize(audio_file, cache_dir ="diarization_cache")
-            st.success("Diarization completed successfully.")
-        except Exception as e:
-            st.error(f"Speaker diarization failed: {e}")
-            return
-        #Transcribe segments
-        st.info("Transcribing diarization segments...")
-        try:
-            entries = transcribe_segments(segments, audio_file)
-        except Exception as e:
-            st.error(f"Transcription failed: {e}")
-            return
+        # st.info("Extracting audio from the video...")
+        # try:
+        #     audio_file = extract_audio(video_path)
+        #     st.success(f"Audio extracted successfully: {audio_file}")
+        # except Exception as e:
+        #     st.error(f"Audio extraction failed: {e}")
+        #     return
+        # #Audio-Visual Diarization
+        # st.info("Running speaker diarization...")
+        # try: 
+        #     segments = diarize(audio_file, cache_dir ="diarization_cache")
+        #     st.success("Diarization completed successfully.")
+        # except Exception as e:
+        #     st.error(f"Speaker diarization failed: {e}")
+        #     return
+        # #Transcribe segments
+        # st.info("Transcribing diarization segments...")
+        # try:
+        #     entries = transcribe_segments(segments, audio_file)
+        # except Exception as e:
+        #     st.error(f"Transcription failed: {e}")
+        #     return
         
-        # Display diarization and transcription
-        st.subheader("Diarization and Transcription Results")
-        for e in entries:
-            st.write(f"{e['start']:.2f}s - {e['end']:.2f}s [{e['speaker']}]: {e['text']}")
+        # # Display diarization and transcription
+        # st.subheader("Diarization and Transcription Results")
+        # for e in entries:
+        #     st.write(f"{e['start']:.2f}s - {e['end']:.2f}s [{e['speaker']}]: {e['text']}")
 
         
-        # Report which modalities are active
-        active = []
-        if enable_pose:
-            active.append("Pose")
-        if enable_facial:
-            active.append("Facial Expression")
-        if enable_vocal:
-            active.append("Vocal Features")
-        st.write(f"**Enabled modalities:** {', '.join(active) if active else 'None'}")
+        # # Report which modalities are active
+        # active = []
+        # if enable_pose:
+        #     active.append("Pose")
+        # if enable_facial:
+        #     active.append("Facial Expression")
+        # if enable_vocal:
+        #     active.append("Vocal Features")
+        # st.write(f"**Enabled modalities:** {', '.join(active) if active else 'None'}")
 
-        # Placeholder for processing logic
-        with st.spinner("Detecting multimodal changes..."):
-            # TODO: Call backend processing functions here and pass enable_pose, enable_facial, enable_vocal
-            # e.g. results = analyze_video(youtube_url, enable_pose, enable_facial, enable_vocal)
-            pass
+        # # Placeholder for processing logic
+        # with st.spinner("Detecting multimodal changes..."):
+        #     # TODO: Call backend processing functions here and pass enable_pose, enable_facial, enable_vocal
+        #     # e.g. results = analyze_video(youtube_url, enable_pose, enable_facial, enable_vocal)
+        #     pass
 
-        st.success("Analysis complete! See results below.")
-        # Placeholder for results output
-        st.subheader("Detected Changes")
-        # Example outputs - to be replaced with dynamic content
-        if enable_facial:
-            st.write("- Speaker A (00:15): Facial expression changed from neutral to surprise.")
-        if enable_pose:
-            st.write("- Speaker B (00:47): Hand pose changed (raised hand).")
-        if enable_vocal:
-            st.write("- Speaker A (01:10): Speech energy spike detected.")
+        # st.success("Analysis complete! See results below.")
+        # # Placeholder for results output
+        # st.subheader("Detected Changes")
+        # # Example outputs - to be replaced with dynamic content
+        # if enable_facial:
+        #     st.write("- Speaker A (00:15): Facial expression changed from neutral to surprise.")
+        # if enable_pose:
+        #     st.write("- Speaker B (00:47): Hand pose changed (raised hand).")
+        # if enable_vocal:
+        #     st.write("- Speaker A (01:10): Speech energy spike detected.")
 
 if __name__ == "__main__":
     main()

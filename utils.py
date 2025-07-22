@@ -74,3 +74,5 @@ def extract_audio(video_path: str, audio_path: str = None) -> str:
     ]
     subprocess.run(cmd, check=True)
     return audio_path
+
+
